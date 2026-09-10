@@ -3,7 +3,11 @@ module com.tuempresa.fact_app {
     requires javafx.fxml;
     requires static lombok;
 
+    opens com.tuempresa.fact_app.application to javafx.fxml, javafx.graphics;
+    opens com.tuempresa.fact_app.controller to javafx.fxml;
+    opens com.tuempresa.fact_app.model to javafx.base;
 
-    opens com.tuempresa.fact_app to javafx.fxml;
-    exports com.tuempresa.fact_app;
+    exports com.tuempresa.fact_app.application;
+    exports com.tuempresa.fact_app.controller;
+    exports com.tuempresa.fact_app.model;
 }
