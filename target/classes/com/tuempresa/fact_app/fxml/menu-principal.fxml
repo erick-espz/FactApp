@@ -1,74 +1,89 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
-<?import javafx.scene.text.Font?>
-<?import javafx.scene.image.Image?>
-<?import javafx.scene.image.ImageView?>
 
-<BorderPane prefHeight="600.0" prefWidth="900.0" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.tuempresa.fact_app.controller.MenuPrincipalController">
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+<?import javafx.scene.control.Tooltip?>
+
+
+<BorderPane prefHeight="600.0" prefWidth="900.0" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.tuempresa.fact_app.controller.MenuPrincipalController">
     <top>
         <VBox>
             <MenuBar>
                 <Menu text="Mantenimiento">
-                    <MenuItem fx:id="mnuProductos" text="Productos" onAction="#abrirProductos">
+                    <MenuItem fx:id="mnuProductos" onAction="#abrirProductos" text="Productos">
                         <graphic>
-                            <ImageView fitWidth="16" fitHeight="16" preserveRatio="true">
-                                <image><Image url="@../icons/producto.png"/></image>
+                            <ImageView fitHeight="16" fitWidth="16" preserveRatio="true">
+                                <image><Image url="@../icons/producto.png" /></image>
+                            </ImageView>
+                        </graphic>
+
+                    </MenuItem>
+                    <MenuItem fx:id="mnuCargos" onAction="#abrirCargos" text="Cargos">
+                        <graphic>
+                            <ImageView fitHeight="16" fitWidth="16" preserveRatio="true">
+                                <image><Image url="@../icons/cargo.png" /></image>
                             </ImageView>
                         </graphic>
                     </MenuItem>
-                    <MenuItem fx:id="mnuCargos" text="Cargos" onAction="#abrirCargos">
+                    <MenuItem fx:id="mnuCategorias" onAction="#abrirCategorias" text="Categorías">
                         <graphic>
-                            <ImageView fitWidth="16" fitHeight="16" preserveRatio="true">
-                                <image><Image url="@../icons/cargo.png"/></image>
-                            </ImageView>
-                        </graphic>
-                    </MenuItem>
-                    <MenuItem fx:id="mnuCategorias" text="Categorías" onAction="#abrirCategorias">
-                        <graphic>
-                            <ImageView fitWidth="16" fitHeight="16" preserveRatio="true">
-                                <image><Image url="@../icons/categoria.png"/></image>
+                            <ImageView fitHeight="16" fitWidth="16" preserveRatio="true">
+                                <image><Image url="@../icons/categoria.png" /></image>
                             </ImageView>
                         </graphic>
                     </MenuItem>
                 </Menu>
                 <Menu text="Sistema">
-                    <MenuItem fx:id="mnuSalir" text="Salir" onAction="#salir">
+                    <MenuItem fx:id="mnuSalir" onAction="#salir" text="Salir">
                         <graphic>
-                            <ImageView fitWidth="16" fitHeight="16" preserveRatio="true">
-                                <image><Image url="@../icons/salir.png"/></image>
+                            <ImageView fitHeight="16" fitWidth="16" preserveRatio="true">
+                                <image><Image url="@../icons/salir.png" /></image>
                             </ImageView>
                         </graphic>
                     </MenuItem>
                 </Menu>
             </MenuBar>
             <ToolBar>
-                <Button fx:id="btnProductos" text="Productos" onAction="#abrirProductos">
+                <Button fx:id="btnProductos" onAction="#abrirProductos">
                     <graphic>
-                        <ImageView fitWidth="20" fitHeight="20" preserveRatio="true">
-                            <image><Image url="@../icons/producto.png"/></image>
+                        <ImageView fitHeight="20" fitWidth="20" preserveRatio="true">
+                            <image><Image url="@../icons/producto.png" /></image>
                         </ImageView>
                     </graphic>
+                    <tooltip>
+                        <Tooltip text=" Productos: Ingrese los productos mediante datos como id, nombre, categoria, precio, unidad, disponibilidad "/>
+                    </tooltip>
+
                 </Button>
-                <Button fx:id="btnCargos" text="Cargos" onAction="#abrirCargos">
+                <Button fx:id="btnCargos" onAction="#abrirCargos">
                     <graphic>
-                        <ImageView fitWidth="20" fitHeight="20" preserveRatio="true">
-                            <image><Image url="@../icons/cargo.png"/></image>
+                        <ImageView fitHeight="20" fitWidth="20" preserveRatio="true">
+                            <image><Image url="@../icons/cargo.png" /></image>
                         </ImageView>
                     </graphic>
+                    <tooltip>
+                        <Tooltip text=" Cargo: Permite ingresar los diferentes roles para asignar al equipo "/>
+                    </tooltip>
+
                 </Button>
-                <Button fx:id="btnCategorias" text="Categorías" onAction="#abrirCategorias">
+                <Button fx:id="btnCategorias" onAction="#abrirCategorias">
                     <graphic>
-                        <ImageView fitWidth="20" fitHeight="20" preserveRatio="true">
-                            <image><Image url="@../icons/categoria.png"/></image>
+                        <ImageView fitHeight="20" fitWidth="20" preserveRatio="true">
+                            <image><Image url="@../icons/categoria.png" /></image>
                         </ImageView>
                     </graphic>
+                    <tooltip>
+                        <Tooltip text=" Categorias: Permite ingresar las categorias para los productos Ej: Lacteos para Queso "/>
+                    </tooltip>
+
                 </Button>
                 <Pane HBox.hgrow="ALWAYS" />
-                <Button fx:id="btnSalir" text="Salir" onAction="#salir">
+                <Button fx:id="btnSalir" onAction="#salir">
                     <graphic>
-                        <ImageView fitWidth="20" fitHeight="20" preserveRatio="true">
-                            <image><Image url="@../icons/salir.png"/></image>
+                        <ImageView fitHeight="20" fitWidth="20" preserveRatio="true">
+                            <image><Image url="@../icons/salir.png" /></image>
                         </ImageView>
                     </graphic>
                 </Button>
