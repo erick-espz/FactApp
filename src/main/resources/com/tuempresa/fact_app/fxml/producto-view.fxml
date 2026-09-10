@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
+<?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.*?>
 
@@ -30,7 +31,13 @@
 
             <VBox spacing="10" alignment="TOP_CENTER">
                 <ImageView fx:id="imgProducto" fitHeight="120.0" fitWidth="120.0" pickOnBounds="true" preserveRatio="true" style="-fx-border-color: #cccccc; -fx-border-width: 1px;"/>
-                <Button fx:id="btnImagen" text="Seleccionar Imagen" onAction="#seleccionarImagen"/>
+                <Button fx:id="btnImagen" text="Seleccionar Imagen" onAction="#seleccionarImagen">
+                    <graphic>
+                        <ImageView fitWidth="16" fitHeight="16" preserveRatio="true">
+                            <image><Image url="@../icons/imagen.png"/></image>
+                        </ImageView>
+                    </graphic>
+                </Button>
             </VBox>
         </HBox>
     </top>

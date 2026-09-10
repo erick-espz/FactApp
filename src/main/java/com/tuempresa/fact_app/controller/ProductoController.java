@@ -11,12 +11,24 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 import java.io.File;
+import java.io.IOException;
 import java.math.BigDecimal;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 
 import com.tuempresa.fact_app.model.Categoria;
 import com.tuempresa.fact_app.model.Producto;
 
 public class ProductoController {
+
+    // Carpeta del proyecto donde se guardan las imágenes de productos.
+    // Se resuelve relativa al directorio de trabajo (la raíz del proyecto
+    // cuando se ejecuta desde IntelliJ / mvn), no depende de la ruta
+    // original del archivo elegido en el explorador de Windows/Mac.
+    private static final String CARPETA_IMAGENES =
+            "src/main/resources/com/tuempresa/fact_app/image";
+
     @FXML private TextField txtCodigo, txtNombre, txtPrecio, txtExistencia;
     @FXML private ComboBox<Categoria> cmbCategoria;
     @FXML private CheckBox chkActivo;
@@ -68,10 +80,29 @@ public class ProductoController {
         FileChooser chooser = new FileChooser();
         chooser.getExtensionFilters().add(
                 new FileChooser.ExtensionFilter("Imágenes", "*.png", "*.jpg", "*.jpeg"));
-        File archivo = chooser.showOpenDialog(txtCodigo.getScene().getWindow());
-        if (archivo != null) {
-            rutaImagen = archivo.toURI().toString();
+        File archivoOriginal = chooser.showOpenDialog(txtCodigo.getScene().getWindow());
+
+        if (archivoOriginal == null) {
+            return;
+        }
+
+        try {
+            File carpetaDestino = new File(CARPETA_IMAGENES);
+            if (!carpetaDestino.exists()) {
+                carpetaDestino.mkdirs();
+            }
+
+            // Nombre único para no pisar imágenes de otros productos
+            String nombreUnico = System.currentTimeMillis() + "_" + archivoOriginal.getName();
+            Path destino = carpetaDestino.toPath().resolve(nombreUnico);
+
+            Files.copy(archivoOriginal.toPath(), destino, StandardCopyOption.REPLACE_EXISTING);
+
+            rutaImagen = destino.toUri().toString();
             imgProducto.setImage(new Image(rutaImagen));
+
+        } catch (IOException e) {
+            mensaje(Alert.AlertType.ERROR, "No se pudo copiar la imagen a la carpeta del proyecto: " + e.getMessage());
         }
     }
 
