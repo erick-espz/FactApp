@@ -10,13 +10,36 @@ public class MenuPrincipalController {
     @FXML
     private void abrirProductos() {
         try {
-            // Nota: Verifica que tu archivo se llame producto-view.fxml (sin doble punto)
             SceneManager.abrirVentana(
                     "/com/tuempresa/fact_app/fxml/producto-view.fxml",
                     "Gestión de productos");
         } catch (IOException e) {
             new Alert(Alert.AlertType.ERROR,
                     "No fue posible abrir Productos: " + e.getMessage()).showAndWait();
+        }
+    }
+
+    @FXML
+    private void abrirCargos() {
+        try {
+            SceneManager.abrirVentana(
+                    "/com/tuempresa/fact_app/fxml/cargo-view.fxml",
+                    "Gestión de cargos");
+        } catch (IOException e) {
+            new Alert(Alert.AlertType.ERROR,
+                    "No fue posible abrir Cargos: " + e.getMessage()).showAndWait();
+        }
+    }
+
+    @FXML
+    private void abrirCategorias() {
+        try {
+            SceneManager.abrirVentana(
+                    "/com/tuempresa/fact_app/fxml/categoria-view.fxml",
+                    "Gestión de categorías");
+        } catch (IOException e) {
+            new Alert(Alert.AlertType.ERROR,
+                    "No fue posible abrir Categorías: " + e.getMessage()).showAndWait();
         }
     }
 

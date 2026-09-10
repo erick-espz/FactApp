@@ -30,28 +30,37 @@ public class ProductoController {
     @FXML private TableColumn<Producto, Integer> colExistencia;
     @FXML private TableColumn<Producto, Boolean> colActivo;
 
-    private final ObservableList<Producto> productos = FXCollections.observableArrayList();
+    private static final ObservableList<Producto> productos = FXCollections.observableArrayList();
+    private static int contadorId = 1;
     private String rutaImagen;
-    private int contadorId = 1;
 
     @FXML
     private void initialize() {
-        // Cargar categorías por defecto para el ComboBox
-        cmbCategoria.setItems(FXCollections.observableArrayList(
-                new Categoria(1, "Alimentos", true),
-                new Categoria(2, "Bebidas", true),
-                new Categoria(3, "Limpieza", true)));
+        cmbCategoria.setItems(CategoriaController.getCategorias());
 
         tblProductos.setItems(productos);
         chkActivo.setSelected(true);
 
-        // Vinculación estricta para que aparezcan los datos al guardar
         colCodigo.setCellValueFactory(new PropertyValueFactory<>("codigo"));
         colNombre.setCellValueFactory(new PropertyValueFactory<>("nombre"));
         colCategoria.setCellValueFactory(new PropertyValueFactory<>("categoria"));
         colPrecio.setCellValueFactory(new PropertyValueFactory<>("precioVenta"));
         colExistencia.setCellValueFactory(new PropertyValueFactory<>("existencia"));
         colActivo.setCellValueFactory(new PropertyValueFactory<>("activo"));
+
+        tblProductos.getSelectionModel().selectedItemProperty().addListener((obs, anterior, seleccionado) -> {
+            if (seleccionado != null) {
+                txtCodigo.setText(seleccionado.getCodigo());
+                txtNombre.setText(seleccionado.getNombre());
+                cmbCategoria.setValue(seleccionado.getCategoria());
+                txtPrecio.setText(seleccionado.getPrecioVenta().toString());
+                txtExistencia.setText(String.valueOf(seleccionado.getExistencia()));
+                chkActivo.setSelected(seleccionado.isActivo());
+
+                rutaImagen = seleccionado.getRutaImagen();
+                imgProducto.setImage(rutaImagen != null ? new Image(rutaImagen) : null);
+            }
+        });
     }
 
     @FXML
@@ -82,19 +91,32 @@ public class ProductoController {
                 return;
             }
 
-            // Se agrega correctamente el objeto a la lista observable que alimenta el TableView
-            productos.add(new Producto(
-                    contadorId++,
-                    txtCodigo.getText().trim(),
-                    txtNombre.getText().trim(),
-                    cmbCategoria.getValue(),
-                    precio,
-                    existencia,
-                    rutaImagen,
-                    chkActivo.isSelected()
-            ));
+            Producto seleccionado = tblProductos.getSelectionModel().getSelectedItem();
 
-            mensaje(Alert.AlertType.INFORMATION, "Producto agregado correctamente.");
+            if (seleccionado != null) {
+                seleccionado.setCodigo(txtCodigo.getText().trim());
+                seleccionado.setNombre(txtNombre.getText().trim());
+                seleccionado.setCategoria(cmbCategoria.getValue());
+                seleccionado.setPrecioVenta(precio);
+                seleccionado.setExistencia(existencia);
+                seleccionado.setRutaImagen(rutaImagen);
+                seleccionado.setActivo(chkActivo.isSelected());
+                tblProductos.refresh();
+                mensaje(Alert.AlertType.INFORMATION, "Producto actualizado correctamente.");
+            } else {
+                productos.add(new Producto(
+                        contadorId++,
+                        txtCodigo.getText().trim(),
+                        txtNombre.getText().trim(),
+                        cmbCategoria.getValue(),
+                        precio,
+                        existencia,
+                        rutaImagen,
+                        chkActivo.isSelected()
+                ));
+                mensaje(Alert.AlertType.INFORMATION, "Producto agregado correctamente.");
+            }
+
             limpiar();
         } catch (NumberFormatException e) {
             mensaje(Alert.AlertType.ERROR, "Precio o existencia no válidos.");
@@ -107,6 +129,7 @@ public class ProductoController {
     }
 
     private void limpiar() {
+        tblProductos.getSelectionModel().clearSelection();
         txtCodigo.clear();
         txtNombre.clear();
         txtPrecio.clear();

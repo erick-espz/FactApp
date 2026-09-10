@@ -14,14 +14,21 @@ public class CargoController {
     @FXML private TableColumn<Cargo, Integer> colId;
     @FXML private TableColumn<Cargo, String> colNombre;
 
-    private final ObservableList<Cargo> cargos = FXCollections.observableArrayList();
-    private int contadorId = 1;
+    private static final ObservableList<Cargo> cargos = FXCollections.observableArrayList();
+    private static int contadorId = 1;
 
     @FXML
     private void initialize() {
         tblCargos.setItems(cargos);
         colId.setCellValueFactory(new PropertyValueFactory<>("id"));
         colNombre.setCellValueFactory(new PropertyValueFactory<>("nombre"));
+
+        tblCargos.getSelectionModel().selectedItemProperty().addListener((obs, anterior, seleccionado) -> {
+            if (seleccionado != null) {
+                txtId.setText(String.valueOf(seleccionado.getId()));
+                txtNombre.setText(seleccionado.getNombre());
+            }
+        });
     }
 
     @FXML
@@ -30,12 +37,22 @@ public class CargoController {
             new Alert(Alert.AlertType.WARNING, "Ingrese el nombre del cargo.", ButtonType.OK).showAndWait();
             return;
         }
-        cargos.add(new Cargo(contadorId++, txtNombre.getText().trim()));
+
+        Cargo seleccionado = tblCargos.getSelectionModel().getSelectedItem();
+
+        if (seleccionado != null) {
+            seleccionado.setNombre(txtNombre.getText().trim());
+            tblCargos.refresh();
+        } else {
+            cargos.add(new Cargo(contadorId++, txtNombre.getText().trim()));
+        }
+
         limpiar();
     }
 
     @FXML
     private void limpiar() {
+        tblCargos.getSelectionModel().clearSelection();
         txtId.clear();
         txtNombre.clear();
     }

@@ -16,8 +16,8 @@ public class CategoriaController {
     @FXML private TableColumn<Categoria, String> colNombre;
     @FXML private TableColumn<Categoria, Boolean> colActivo;
 
-    private final ObservableList<Categoria> categorias = FXCollections.observableArrayList();
-    private int contadorId = 1;
+    private static final ObservableList<Categoria> categorias = FXCollections.observableArrayList();
+    private static int contadorId = 1;
 
     @FXML
     private void initialize() {
@@ -27,6 +27,14 @@ public class CategoriaController {
         colId.setCellValueFactory(new PropertyValueFactory<>("id"));
         colNombre.setCellValueFactory(new PropertyValueFactory<>("nombre"));
         colActivo.setCellValueFactory(new PropertyValueFactory<>("activo"));
+
+        tblCategorias.getSelectionModel().selectedItemProperty().addListener((obs, anterior, seleccionada) -> {
+            if (seleccionada != null) {
+                txtId.setText(String.valueOf(seleccionada.getId()));
+                txtNombre.setText(seleccionada.getNombre());
+                chkActivo.setSelected(seleccionada.isActivo());
+            }
+        });
     }
 
     @FXML
@@ -35,12 +43,23 @@ public class CategoriaController {
             new Alert(Alert.AlertType.WARNING, "Ingrese el nombre de la categoría.", ButtonType.OK).showAndWait();
             return;
         }
-        categorias.add(new Categoria(contadorId++, txtNombre.getText().trim(), chkActivo.isSelected()));
+
+        Categoria seleccionada = tblCategorias.getSelectionModel().getSelectedItem();
+
+        if (seleccionada != null) {
+            seleccionada.setNombre(txtNombre.getText().trim());
+            seleccionada.setActivo(chkActivo.isSelected());
+            tblCategorias.refresh();
+        } else {
+            categorias.add(new Categoria(contadorId++, txtNombre.getText().trim(), chkActivo.isSelected()));
+        }
+
         limpiar();
     }
 
     @FXML
     private void limpiar() {
+        tblCategorias.getSelectionModel().clearSelection();
         txtId.clear();
         txtNombre.clear();
         chkActivo.setSelected(true);
@@ -49,5 +68,9 @@ public class CategoriaController {
     @FXML
     private void cerrar() {
         ((Stage) txtNombre.getScene().getWindow()).close();
+    }
+    @FXML
+    public static ObservableList<Categoria> getCategorias() {
+        return categorias;
     }
 }

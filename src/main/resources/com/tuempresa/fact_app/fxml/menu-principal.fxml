@@ -9,6 +9,8 @@
             <MenuBar>
                 <Menu text="Mantenimiento">
                     <MenuItem fx:id="mnuProductos" text="Productos" onAction="#abrirProductos"/>
+                    <MenuItem fx:id="mnuCargos" text="Cargos" onAction="#abrirCargos"/>
+                    <MenuItem fx:id="mnuCategorias" text="Categorías" onAction="#abrirCategorias"/>
                 </Menu>
                 <Menu text="Sistema">
                     <MenuItem fx:id="mnuSalir" text="Salir" onAction="#salir"/>
@@ -16,6 +18,8 @@
             </MenuBar>
             <ToolBar>
                 <Button fx:id="btnProductos" text="Productos" onAction="#abrirProductos"/>
+                <Button fx:id="btnCargos" text="Cargos" onAction="#abrirCargos"/>
+                <Button fx:id="btnCategorias" text="Categorías" onAction="#abrirCategorias"/>
                 <Pane HBox.hgrow="ALWAYS" />
                 <Button fx:id="btnSalir" text="Salir" onAction="#salir"/>
             </ToolBar>

@@ -8,7 +8,6 @@ import javafx.stage.Stage;
 public class FacturacionApplication extends Application {
     @Override
     public void start(Stage stage) throws Exception {
-        // RUTA CORREGIDA ACORDE A TU PROYECTO
         FXMLLoader loader = new FXMLLoader(getClass().getResource(
                 "/com/tuempresa/fact_app/fxml/menu-principal.fxml"));
 
