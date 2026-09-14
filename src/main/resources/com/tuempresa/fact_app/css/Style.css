@@ -292,3 +292,38 @@
 .alert .label {
     -fx-text-fill: #ffffff;
 }
+
+/* ========== VALIDACIÓN - CAMPOS CON ERROR ========== */
+.text-field.error,
+.text-area.error {
+    -fx-border-color: #e74c3c !important;
+    -fx-border-width: 2 !important;
+    -fx-background-color: #4a2a2a !important;
+}
+
+.combo-box.error {
+    -fx-border-color: #e74c3c !important;
+    -fx-border-width: 2 !important;
+    -fx-background-color: #3a2a2a !important;
+}
+
+/* ========== BOTONES DESHABILITADOS ========== */
+.button:disabled {
+    -fx-opacity: 0.5;
+    -fx-cursor: not-allowed;
+}
+
+#btnGuardar:disabled {
+    -fx-background-color: #1a5a30;
+    -fx-opacity: 0.5;
+}
+
+#btnEliminar:disabled {
+    -fx-background-color: #6a1c1c;
+    -fx-opacity: 0.5;
+}
+
+#btnCerrar:disabled {
+    -fx-background-color: #3a4a5a;
+    -fx-opacity: 0.5;
+}

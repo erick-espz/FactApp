@@ -24,9 +24,9 @@
             </rowConstraints>
          </GridPane>
          <HBox alignment="CENTER_LEFT" spacing="15">
-            <Button fx:id="btnGuardar" onAction="#guardar" text="Guardar" textFill="#33a635" />
-            <Button fx:id="btnLimpiar" onAction="#limpiar" text="Limpiar" textFill="#17a0c3" />
-            <Button fx:id="btnCerrar" onAction="#cerrar" text="Cerrar" />
+            <Button fx:id="btnGuardar" text="Guardar" onAction="#guardar" />
+            <Button fx:id="btnEliminar" text="Eliminar" onAction="#eliminar" />
+            <Button fx:id="btnCerrar" text="Cerrar" onAction="#cerrar" />
          </HBox>
       </VBox>
    </top>

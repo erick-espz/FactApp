@@ -61,6 +61,7 @@
 
             <HBox spacing="15" alignment="CENTER_RIGHT">
                 <Button fx:id="btnGuardar" text="Guardar" onAction="#guardar"/>
+                <Button fx:id="btnEliminar" text="Eliminar" onAction="#eliminar"/>
                 <Button fx:id="btnCerrar" text="Cerrar" onAction="#cerrar"/>
             </HBox>
         </VBox>

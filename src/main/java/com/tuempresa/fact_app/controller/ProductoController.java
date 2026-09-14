@@ -7,6 +7,8 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
@@ -22,10 +24,6 @@ import com.tuempresa.fact_app.model.Producto;
 
 public class ProductoController {
 
-    // Carpeta del proyecto donde se guardan las imágenes de productos.
-    // Se resuelve relativa al directorio de trabajo (la raíz del proyecto
-    // cuando se ejecuta desde IntelliJ / mvn), no depende de la ruta
-    // original del archivo elegido en el explorador de Windows/Mac.
     private static final String CARPETA_IMAGENES =
             "src/main/resources/com/tuempresa/fact_app/image";
 
@@ -41,6 +39,8 @@ public class ProductoController {
     @FXML private TableColumn<Producto, BigDecimal> colPrecio;
     @FXML private TableColumn<Producto, Integer> colExistencia;
     @FXML private TableColumn<Producto, Boolean> colActivo;
+
+    @FXML private Button btnGuardar, btnEliminar;
 
     private static final ObservableList<Producto> productos = FXCollections.observableArrayList();
     private static int contadorId = 1;
@@ -60,6 +60,9 @@ public class ProductoController {
         colExistencia.setCellValueFactory(new PropertyValueFactory<>("existencia"));
         colActivo.setCellValueFactory(new PropertyValueFactory<>("activo"));
 
+        // Deshabilitar botón eliminar al inicio
+        btnEliminar.setDisable(true);
+
         tblProductos.getSelectionModel().selectedItemProperty().addListener((obs, anterior, seleccionado) -> {
             if (seleccionado != null) {
                 txtCodigo.setText(seleccionado.getCodigo());
@@ -71,8 +74,22 @@ public class ProductoController {
 
                 rutaImagen = seleccionado.getRutaImagen();
                 imgProducto.setImage(rutaImagen != null ? new Image(rutaImagen) : null);
+
+                // Habilitar botón eliminar cuando hay selección
+                btnEliminar.setDisable(false);
             }
         });
+
+        // Atajos de teclado
+        tblProductos.setOnKeyPressed(this::onTeclaPresionada);
+    }
+
+    private void onTeclaPresionada(KeyEvent event) {
+        if (event.getCode() == javafx.scene.input.KeyCode.DELETE ||
+                event.getCode() == javafx.scene.input.KeyCode.BACK_SPACE) {
+            eliminar();
+            event.consume();
+        }
     }
 
     @FXML
@@ -92,7 +109,6 @@ public class ProductoController {
                 carpetaDestino.mkdirs();
             }
 
-            // Nombre único para no pisar imágenes de otros productos
             String nombreUnico = System.currentTimeMillis() + "_" + archivoOriginal.getName();
             Path destino = carpetaDestino.toPath().resolve(nombreUnico);
 
@@ -102,23 +118,58 @@ public class ProductoController {
             imgProducto.setImage(new Image(rutaImagen));
 
         } catch (IOException e) {
-            mensaje(Alert.AlertType.ERROR, "No se pudo copiar la imagen a la carpeta del proyecto: " + e.getMessage());
+            mensaje(Alert.AlertType.ERROR, "No se pudo copiar la imagen: " + e.getMessage());
         }
     }
 
     @FXML
     private void guardar() {
-        if (txtCodigo.getText().isBlank() || txtNombre.getText().isBlank()
-                || txtPrecio.getText().isBlank() || txtExistencia.getText().isBlank()
-                || cmbCategoria.getValue() == null) {
-            mensaje(Alert.AlertType.WARNING, "Complete los campos obligatorios.");
+        // Limpiar errores previos
+        limpiarErrores();
+
+        boolean hayError = false;
+
+        // Validar campos vacíos
+        if (txtCodigo.getText().isBlank()) {
+            txtCodigo.getStyleClass().add("error");
+            hayError = true;
+        }
+        if (txtNombre.getText().isBlank()) {
+            txtNombre.getStyleClass().add("error");
+            hayError = true;
+        }
+        if (cmbCategoria.getValue() == null) {
+            cmbCategoria.getStyleClass().add("error");
+            hayError = true;
+        }
+        if (txtPrecio.getText().isBlank()) {
+            txtPrecio.getStyleClass().add("error");
+            hayError = true;
+        }
+        if (txtExistencia.getText().isBlank()) {
+            txtExistencia.getStyleClass().add("error");
+            hayError = true;
+        }
+
+        if (hayError) {
+            mensaje(Alert.AlertType.WARNING, "Complete los campos en rojo.");
             return;
         }
+
+        // Validar valores numéricos
         try {
             BigDecimal precio = new BigDecimal(txtPrecio.getText().trim());
             int existencia = Integer.parseInt(txtExistencia.getText().trim());
-            if (precio.signum() <= 0 || existencia < 0) {
-                mensaje(Alert.AlertType.WARNING, "Precio mayor que cero y existencia no negativa.");
+
+            if (precio.signum() <= 0) {
+                txtPrecio.getStyleClass().add("error");
+                mensaje(Alert.AlertType.WARNING, "Precio debe ser mayor a cero.");
+                return;
+            }
+
+            if (existencia < 0) {
+                txtExistencia.getStyleClass().add("error");
+                mensaje(Alert.AlertType.WARNING, "Existencia no puede ser negativa.");
                 return;
             }
 
@@ -150,7 +201,27 @@ public class ProductoController {
 
             limpiar();
         } catch (NumberFormatException e) {
+            txtPrecio.getStyleClass().add("error");
+            txtExistencia.getStyleClass().add("error");
             mensaje(Alert.AlertType.ERROR, "Precio o existencia no válidos.");
+        }
+    }
+
+    @FXML
+    private void eliminar() {
+        Producto seleccionado = tblProductos.getSelectionModel().getSelectedItem();
+        if (seleccionado == null) {
+            mensaje(Alert.AlertType.WARNING, "Selecciona un producto para eliminar.");
+            return;
+        }
+
+        Alert confirmacion = new Alert(Alert.AlertType.CONFIRMATION,
+                "¿Eliminar '" + seleccionado.getNombre() + "'?",
+                ButtonType.OK, ButtonType.CANCEL);
+        if (confirmacion.showAndWait().orElse(ButtonType.CANCEL) == ButtonType.OK) {
+            productos.remove(seleccionado);
+            limpiar();
+            mensaje(Alert.AlertType.INFORMATION, "Producto eliminado.");
         }
     }
 
@@ -169,6 +240,17 @@ public class ProductoController {
         chkActivo.setSelected(true);
         imgProducto.setImage(null);
         rutaImagen = null;
+
+        // Deshabilitar botón eliminar cuando limpias
+        btnEliminar.setDisable(true);
+    }
+
+    private void limpiarErrores() {
+        txtCodigo.getStyleClass().remove("error");
+        txtNombre.getStyleClass().remove("error");
+        cmbCategoria.getStyleClass().remove("error");
+        txtPrecio.getStyleClass().remove("error");
+        txtExistencia.getStyleClass().remove("error");
     }
 
     private void mensaje(Alert.AlertType tipo, String texto) {
