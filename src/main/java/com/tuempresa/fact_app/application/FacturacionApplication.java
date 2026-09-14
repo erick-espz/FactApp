@@ -11,8 +11,13 @@ public class FacturacionApplication extends Application {
         FXMLLoader loader = new FXMLLoader(getClass().getResource(
                 "/com/tuempresa/fact_app/fxml/menu-principal.fxml"));
 
+        Scene scene = new Scene(loader.load(), 900, 600);
+
+        scene.getStylesheets().add(getClass().getResource(
+                "/com/tuempresa/fact_app/css/Style.css").toExternalForm());
+
         stage.setTitle("Sistema de facturación");
-        stage.setScene(new Scene(loader.load(), 900, 600));
+        stage.setScene(scene);
         stage.show();
     }
 

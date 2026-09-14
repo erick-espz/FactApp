@@ -53,7 +53,7 @@
                         </ImageView>
                     </graphic>
                     <tooltip>
-                        <Tooltip text=" Productos: Ingrese los productos mediante datos como id, nombre, categoria, precio, unidad, disponibilidad "/>
+                        <Tooltip text=" Productos "/>
                     </tooltip>
 
                 </Button>
@@ -64,7 +64,7 @@
                         </ImageView>
                     </graphic>
                     <tooltip>
-                        <Tooltip text=" Cargo: Permite ingresar los diferentes roles para asignar al equipo "/>
+                        <Tooltip text=" Cargo "/>
                     </tooltip>
 
                 </Button>
@@ -75,7 +75,7 @@
                         </ImageView>
                     </graphic>
                     <tooltip>
-                        <Tooltip text=" Categorias: Permite ingresar las categorias para los productos Ej: Lacteos para Queso "/>
+                        <Tooltip text=" Categorias "/>
                     </tooltip>
 
                 </Button>
@@ -86,6 +86,9 @@
                             <image><Image url="@../icons/salir.png" /></image>
                         </ImageView>
                     </graphic>
+                    <tooltip>
+                        <Tooltip text=" Salir "/>
+                    </tooltip>
                 </Button>
             </ToolBar>
         </VBox>
