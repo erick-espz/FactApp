@@ -152,7 +152,7 @@ public class ProductoController {
         }
 
         if (hayError) {
-            mensaje(Alert.AlertType.WARNING, "Complete los campos en rojo.");
+            mensaje(Alert.AlertType.WARNING, "Complete los campos vacios.");
             return;
         }
 
