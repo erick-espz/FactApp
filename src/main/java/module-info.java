@@ -1,8 +1,9 @@
 module com.tuempresa.fact_app {
     requires javafx.controls;
+    requires java.sql;
+    requires org.postgresql.jdbc;
     requires javafx.fxml;
     requires static lombok;
-    requires java.sql;
 
     opens com.tuempresa.fact_app.application to javafx.fxml, javafx.graphics;
     opens com.tuempresa.fact_app.controller to javafx.fxml;
