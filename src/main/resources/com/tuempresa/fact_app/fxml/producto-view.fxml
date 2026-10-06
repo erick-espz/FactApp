@@ -44,7 +44,11 @@
     <center>
         <VBox spacing="15">
             <padding><Insets right="20" bottom="20" left="20"/></padding>
-
+            <HBox spacing="10" alignment="CENTER_LEFT">
+                <TextField fx:id="txtBuscar" promptText="Buscar por código, nombre o categoría" HBox.hgrow="ALWAYS"/>
+                <ComboBox fx:id="cmbFiltroEstado" prefWidth="130.0"/>
+                <ComboBox fx:id="cmbFiltroCategoria" prefWidth="170.0"/>
+            </HBox>
             <TableView fx:id="tblProductos" VBox.vgrow="ALWAYS">
                 <columns>
                     <TableColumn fx:id="colCodigo" text="Código" prefWidth="80"/>
@@ -63,6 +67,7 @@
                 <Button fx:id="btnGuardar" text="Guardar" onAction="#guardar"/>
                 <Button fx:id="btnEliminar" text="Eliminar" onAction="#eliminar"/>
                 <Button fx:id="btnCerrar" text="Cerrar" onAction="#cerrar"/>
+                <Button fx:id="btnNuevo" text="Nuevo" onAction="#nuevo"/>
             </HBox>
         </VBox>
     </center>

@@ -2,6 +2,7 @@ package com.tuempresa.fact_app.controller;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
@@ -18,6 +19,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.sql.SQLException;
+import java.util.List;
 
 import com.tuempresa.fact_app.dao.CategoriaDAO;
 import com.tuempresa.fact_app.dao.ProductoDAO;
@@ -36,6 +38,10 @@ public class ProductoController {
     @FXML private CheckBox chkActivo;
     @FXML private ImageView imgProducto;
 
+    @FXML private TextField txtBuscar;
+    @FXML private ComboBox<String> cmbFiltroEstado;
+    @FXML private ComboBox<Categoria> cmbFiltroCategoria;
+
     @FXML private TableView<Producto> tblProductos;
     @FXML private TableColumn<Producto, String> colCodigo;
     @FXML private TableColumn<Producto, String> colNombre;
@@ -47,6 +53,9 @@ public class ProductoController {
     @FXML private Button btnGuardar, btnEliminar;
 
     private final ObservableList<Producto> productos = FXCollections.observableArrayList();
+    private final FilteredList<Producto> productosFiltrados = new FilteredList<>(productos, p -> true);
+    private static final Categoria TODAS = new Categoria(null, "Todas las categorías", true);
+
     private final ProductoDAO productoDAO = new ProductoDAO();
     private final CategoriaDAO categoriaDAO = new CategoriaDAO();
     private String rutaImagen;
@@ -55,8 +64,15 @@ public class ProductoController {
     private void initialize() {
         Platform.runLater(this::cargarDatos);
 
-        tblProductos.setItems(productos);
+        tblProductos.setItems(productosFiltrados);
         chkActivo.setSelected(true);
+
+        cmbFiltroEstado.setItems(FXCollections.observableArrayList("Todos", "Activos", "Inactivos"));
+        cmbFiltroEstado.setValue("Todos");
+
+        txtBuscar.textProperty().addListener((obs, a, n) -> aplicarFiltros());
+        cmbFiltroEstado.valueProperty().addListener((obs, a, n) -> aplicarFiltros());
+        cmbFiltroCategoria.valueProperty().addListener((obs, a, n) -> aplicarFiltros());
 
         colCodigo.setCellValueFactory(new PropertyValueFactory<>("codigo"));
         colNombre.setCellValueFactory(new PropertyValueFactory<>("nombre"));
@@ -244,6 +260,12 @@ public class ProductoController {
     }
 
     @FXML
+    private void nuevo() {
+        limpiarErrores();
+        limpiar();
+    }
+
+    @FXML
     private void cerrar() {
         ((Stage) txtCodigo.getScene().getWindow()).close();
     }
@@ -274,9 +296,38 @@ public class ProductoController {
         new Alert(tipo, texto, ButtonType.OK).showAndWait();
     }
 
+    private void aplicarFiltros() {
+        String texto = txtBuscar.getText() == null ? "" : txtBuscar.getText().trim().toLowerCase();
+        String estado = cmbFiltroEstado.getValue();
+        Categoria catFiltro = cmbFiltroCategoria.getValue();
+
+        productosFiltrados.setPredicate(p -> {
+            boolean coincideTexto = texto.isEmpty()
+                    || p.getCodigo().toLowerCase().contains(texto)
+                    || p.getNombre().toLowerCase().contains(texto)
+                    || p.getCategoria().getNombre().toLowerCase().contains(texto);
+
+            boolean coincideEstado = estado == null || estado.equals("Todos")
+                    || (estado.equals("Activos") && p.isActivo())
+                    || (estado.equals("Inactivos") && !p.isActivo());
+
+            boolean coincideCategoria = catFiltro == null || catFiltro.getId() == null
+                    || catFiltro.getId().equals(p.getCategoria().getId());
+
+            return coincideTexto && coincideEstado && coincideCategoria;
+        });
+    }
+
     private void cargarDatos() {
         try {
-            cmbCategoria.setItems(FXCollections.observableArrayList(categoriaDAO.listar()));
+            List<Categoria> cats = categoriaDAO.listar();
+            cmbCategoria.setItems(FXCollections.observableArrayList(cats));
+
+            ObservableList<Categoria> conTodas = FXCollections.observableArrayList(cats);
+            conTodas.add(0, TODAS);
+            cmbFiltroCategoria.setItems(conTodas);
+            cmbFiltroCategoria.setValue(TODAS);
+
             productos.setAll(productoDAO.listar());
         } catch (SQLException e) {
             Alertas.mostrarError("Error de base de datos", "No fue posible cargar la información.");
