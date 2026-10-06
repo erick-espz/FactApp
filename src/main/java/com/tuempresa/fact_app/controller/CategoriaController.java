@@ -1,6 +1,9 @@
 package com.tuempresa.fact_app.controller;
 
+import com.tuempresa.fact_app.dao.CategoriaDAO;
 import com.tuempresa.fact_app.model.Categoria;
+import com.tuempresa.fact_app.util.Alertas;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -9,7 +12,8 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.stage.Stage;
-import lombok.Getter;
+
+import java.sql.SQLException;
 
 public class CategoriaController {
     @FXML private TextField txtId, txtNombre;
@@ -20,7 +24,8 @@ public class CategoriaController {
     @FXML private TableColumn<Categoria, Boolean> colActivo;
     @FXML private Button btnGuardar, btnEliminar;
 
-
+    private final CategoriaDAO dao = new CategoriaDAO();
+    private final ObservableList<Categoria> categorias = FXCollections.observableArrayList();
 
     @FXML
     private void initialize() {
@@ -31,20 +36,19 @@ public class CategoriaController {
         colNombre.setCellValueFactory(new PropertyValueFactory<>("nombre"));
         colActivo.setCellValueFactory(new PropertyValueFactory<>("activo"));
 
-        // Deshabilitar botón eliminar al inicio
         btnEliminar.setDisable(true);
 
-        tblCategorias.getSelectionModel().selectedItemProperty().addListener((obs, anterior, seleccionada) -> {
-            if (seleccionada != null) {
-                txtId.setText(String.valueOf(seleccionada.getId()));
-                txtNombre.setText(seleccionada.getNombre());
-                chkActivo.setSelected(seleccionada.isActivo());
-                btnEliminar.setDisable(false); // Habilitar cuando hay selección
+        tblCategorias.getSelectionModel().selectedItemProperty().addListener((obs, anterior, sel) -> {
+            if (sel != null) {
+                txtId.setText(String.valueOf(sel.getId()));
+                txtNombre.setText(sel.getNombre());
+                chkActivo.setSelected(sel.isActivo());
+                btnEliminar.setDisable(false);
             }
         });
 
-        // Atajos de teclado
         tblCategorias.setOnKeyPressed(this::onTeclaPresionada);
+        Platform.runLater(this::cargarCategorias);
     }
 
     private void onTeclaPresionada(KeyEvent event) {
@@ -54,58 +58,97 @@ public class CategoriaController {
         }
     }
 
-    @Getter
-    private static final ObservableList<Categoria> categorias = FXCollections.observableArrayList();
-    private static int contadorId = 4; // Empieza en 4 porque ya usamos 1, 2, 3
+    private void cargarCategorias() {
+        try {
+            categorias.setAll(dao.listar());
+        } catch (SQLException e) {
+            Alertas.mostrarError("Error de base de datos", "No fue posible cargar las categorías.");
+            System.err.println(e.getMessage());
+        }
+    }
 
-    static {
-        categorias.addAll(
-                new Categoria(1, "Alimentos", true),
-                new Categoria(2, "Bebidas", true),
-                new Categoria(3, "Limpieza", true)
-        );
+    /** Valida el nombre. Devuelve true si es correcto. */
+    private boolean validarCategoria() {
+        String nombre = txtNombre.getText().trim();
+        if (nombre.isEmpty()) {
+            txtNombre.getStyleClass().add("error");
+            Alertas.mostrarError("Validación", "El nombre de la categoría es obligatorio.");
+            txtNombre.requestFocus();
+            return false;
+        }
+        return true;
     }
 
     @FXML
     private void guardar() {
         limpiarErrores();
+        if (!validarCategoria()) return;
 
-        if (txtNombre.getText().isBlank()) {
-            txtNombre.getStyleClass().add("error");
-            new Alert(Alert.AlertType.WARNING, "Ingrese el nombre de la categoría.").showAndWait();
-            return;
+        String nombre = txtNombre.getText().trim();
+        Categoria sel = tblCategorias.getSelectionModel().getSelectedItem();
+
+        try {
+            if (sel == null) { // INSERT
+                if (dao.existeNombre(nombre)) {
+                    nombreDuplicado();
+                    return;
+                }
+                dao.guardar(new Categoria(null, nombre, chkActivo.isSelected()));
+                Alertas.mostrarExito("Categoría registrada", "La categoría se guardó correctamente.");
+            } else {           // UPDATE (excluye la propia categoría)
+                if (dao.existeNombre(nombre, sel.getId())) {
+                    nombreDuplicado();
+                    return;
+                }
+                dao.actualizar(new Categoria(sel.getId(), nombre, chkActivo.isSelected()));
+                Alertas.mostrarExito("Categoría actualizada", "Los cambios se guardaron correctamente.");
+            }
+            cargarCategorias();
+            limpiar();
+        } catch (SQLException e) {
+            if ("23505".equals(e.getSQLState())) { // violación de UNIQUE
+                nombreDuplicado();
+            } else {
+                Alertas.mostrarError("Error de base de datos", "No fue posible completar la operación.");
+            }
+            System.err.println(e.getMessage());
         }
+    }
 
-        Categoria seleccionada = tblCategorias.getSelectionModel().getSelectedItem();
-
-        if (seleccionada != null) {
-            seleccionada.setNombre(txtNombre.getText().trim());
-            seleccionada.setActivo(chkActivo.isSelected());
-            tblCategorias.refresh();
-            new Alert(Alert.AlertType.INFORMATION, "Categoría actualizada.").showAndWait();
-        } else {
-            categorias.add(new Categoria(contadorId++, txtNombre.getText().trim(), chkActivo.isSelected()));
-            new Alert(Alert.AlertType.INFORMATION, "Categoría agregada.").showAndWait();
-        }
-
-        limpiar();
+    private void nombreDuplicado() {
+        txtNombre.getStyleClass().add("error");
+        Alertas.mostrarAdvertencia("Nombre duplicado", "Ya existe una categoría con ese nombre.");
+        txtNombre.requestFocus();
     }
 
     @FXML
     private void eliminar() {
-        Categoria seleccionada = tblCategorias.getSelectionModel().getSelectedItem();
-        if (seleccionada == null) {
-            new Alert(Alert.AlertType.WARNING, "Selecciona una categoría para eliminar.").showAndWait();
+        Categoria sel = tblCategorias.getSelectionModel().getSelectedItem();
+        if (sel == null) {
+            Alertas.mostrarAdvertencia("Seleccione una categoría",
+                    "Debe seleccionar la categoría que desea eliminar.");
             return;
         }
+        if (!Alertas.confirmar("Confirmar", "¿Eliminar '" + sel.getNombre() + "'?")) return;
 
-        Alert confirmacion = new Alert(Alert.AlertType.CONFIRMATION,
-                "¿Eliminar '" + seleccionada.getNombre() + "'?",
-                ButtonType.OK, ButtonType.CANCEL);
-        if (confirmacion.showAndWait().orElse(ButtonType.CANCEL) == ButtonType.OK) {
-            categorias.remove(seleccionada);
+        try {
+            if (dao.tieneProductos(sel.getId())) {
+                Alertas.mostrarAdvertencia("Operación cancelada",
+                        "No puede eliminar la categoría porque tiene productos asociados.");
+                return;
+            }
+            dao.eliminar(sel.getId());
+            Alertas.mostrarExito("Categoría eliminada", "La categoría fue eliminada correctamente.");
+            cargarCategorias();
             limpiar();
-            new Alert(Alert.AlertType.INFORMATION, "Categoría eliminada.").showAndWait();
+        } catch (SQLException e) {
+            if ("23503".equals(e.getSQLState())) { // violación de llave foránea
+                Alertas.mostrarAdvertencia("Operación cancelada",
+                        "No puede eliminar la categoría porque tiene productos asociados.");
+            } else {
+                Alertas.mostrarError("Error de base de datos", "No fue posible completar la operación.");
+            }
+            System.err.println(e.getMessage());
         }
     }
 
@@ -125,5 +168,4 @@ public class CategoriaController {
     private void cerrar() {
         ((Stage) txtNombre.getScene().getWindow()).close();
     }
-
 }

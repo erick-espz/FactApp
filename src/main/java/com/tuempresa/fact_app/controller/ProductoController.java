@@ -7,7 +7,6 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
@@ -18,9 +17,14 @@ import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.sql.SQLException;
 
+import com.tuempresa.fact_app.dao.CategoriaDAO;
+import com.tuempresa.fact_app.dao.ProductoDAO;
 import com.tuempresa.fact_app.model.Categoria;
 import com.tuempresa.fact_app.model.Producto;
+import com.tuempresa.fact_app.util.Alertas;
+import javafx.application.Platform;
 
 public class ProductoController {
 
@@ -42,13 +46,14 @@ public class ProductoController {
 
     @FXML private Button btnGuardar, btnEliminar;
 
-    private static final ObservableList<Producto> productos = FXCollections.observableArrayList();
-    private static int contadorId = 1;
+    private final ObservableList<Producto> productos = FXCollections.observableArrayList();
+    private final ProductoDAO productoDAO = new ProductoDAO();
+    private final CategoriaDAO categoriaDAO = new CategoriaDAO();
     private String rutaImagen;
 
     @FXML
     private void initialize() {
-        cmbCategoria.setItems(CategoriaController.getCategorias());
+        Platform.runLater(this::cargarDatos);
 
         tblProductos.setItems(productos);
         chkActivo.setSelected(true);
@@ -60,7 +65,6 @@ public class ProductoController {
         colExistencia.setCellValueFactory(new PropertyValueFactory<>("existencia"));
         colActivo.setCellValueFactory(new PropertyValueFactory<>("activo"));
 
-        // Deshabilitar botón eliminar al inicio
         btnEliminar.setDisable(true);
 
         tblProductos.getSelectionModel().selectedItemProperty().addListener((obs, anterior, seleccionado) -> {
@@ -75,12 +79,10 @@ public class ProductoController {
                 rutaImagen = seleccionado.getRutaImagen();
                 imgProducto.setImage(rutaImagen != null ? new Image(rutaImagen) : null);
 
-                // Habilitar botón eliminar cuando hay selección
                 btnEliminar.setDisable(false);
             }
         });
 
-        // Atajos de teclado
         tblProductos.setOnKeyPressed(this::onTeclaPresionada);
     }
 
@@ -122,106 +124,122 @@ public class ProductoController {
         }
     }
 
-    @FXML
-    private void guardar() {
-        // Limpiar errores previos
-        limpiarErrores();
+    private Producto obtenerProductoFormulario() {
+        String codigo = txtCodigo.getText().trim();
+        String nombre = txtNombre.getText().trim();
 
-        boolean hayError = false;
-
-        // Validar campos vacíos
-        if (txtCodigo.getText().isBlank()) {
+        if (codigo.isEmpty()) {
             txtCodigo.getStyleClass().add("error");
-            hayError = true;
+            txtCodigo.requestFocus();
+            throw new IllegalArgumentException("El código es obligatorio.");
         }
-        if (txtNombre.getText().isBlank()) {
+        if (nombre.isEmpty()) {
             txtNombre.getStyleClass().add("error");
-            hayError = true;
+            txtNombre.requestFocus();
+            throw new IllegalArgumentException("El nombre es obligatorio.");
         }
-        if (cmbCategoria.getValue() == null) {
+
+        Categoria categoria = cmbCategoria.getSelectionModel().getSelectedItem();
+        if (categoria == null) {
             cmbCategoria.getStyleClass().add("error");
-            hayError = true;
-        }
-        if (txtPrecio.getText().isBlank()) {
-            txtPrecio.getStyleClass().add("error");
-            hayError = true;
-        }
-        if (txtExistencia.getText().isBlank()) {
-            txtExistencia.getStyleClass().add("error");
-            hayError = true;
+            cmbCategoria.requestFocus();
+            throw new IllegalArgumentException("Debe seleccionar una categoría.");
         }
 
-        if (hayError) {
-            mensaje(Alert.AlertType.WARNING, "Complete los campos vacios.");
-            return;
-        }
-
-        // Validar valores numéricos
+        BigDecimal precio;
         try {
-            BigDecimal precio = new BigDecimal(txtPrecio.getText().trim());
-            int existencia = Integer.parseInt(txtExistencia.getText().trim());
-
-            if (precio.signum() <= 0) {
-                txtPrecio.getStyleClass().add("error");
-                mensaje(Alert.AlertType.WARNING, "Precio debe ser mayor a cero.");
-                return;
-            }
-
-            if (existencia < 0) {
-                txtExistencia.getStyleClass().add("error");
-                mensaje(Alert.AlertType.WARNING, "Existencia no puede ser negativa.");
-                return;
-            }
-
-            Producto seleccionado = tblProductos.getSelectionModel().getSelectedItem();
-
-            if (seleccionado != null) {
-                seleccionado.setCodigo(txtCodigo.getText().trim());
-                seleccionado.setNombre(txtNombre.getText().trim());
-                seleccionado.setCategoria(cmbCategoria.getValue());
-                seleccionado.setPrecioVenta(precio);
-                seleccionado.setExistencia(existencia);
-                seleccionado.setRutaImagen(rutaImagen);
-                seleccionado.setActivo(chkActivo.isSelected());
-                tblProductos.refresh();
-                mensaje(Alert.AlertType.INFORMATION, "Producto actualizado correctamente.");
-            } else {
-                productos.add(new Producto(
-                        contadorId++,
-                        txtCodigo.getText().trim(),
-                        txtNombre.getText().trim(),
-                        cmbCategoria.getValue(),
-                        precio,
-                        existencia,
-                        rutaImagen,
-                        chkActivo.isSelected()
-                ));
-                mensaje(Alert.AlertType.INFORMATION, "Producto agregado correctamente.");
-            }
-
-            limpiar();
+            precio = new BigDecimal(txtPrecio.getText().trim());
         } catch (NumberFormatException e) {
             txtPrecio.getStyleClass().add("error");
-            txtExistencia.getStyleClass().add("error");
-            mensaje(Alert.AlertType.ERROR, "Precio o existencia no válidos.");
+            txtPrecio.requestFocus();
+            throw new IllegalArgumentException("El precio debe ser un valor numérico.");
         }
+        if (precio.compareTo(BigDecimal.ZERO) <= 0) {
+            txtPrecio.getStyleClass().add("error");
+            txtPrecio.requestFocus();
+            throw new IllegalArgumentException("El precio debe ser mayor que cero.");
+        }
+
+        int existencia;
+        try {
+            existencia = Integer.parseInt(txtExistencia.getText().trim());
+        } catch (NumberFormatException e) {
+            txtExistencia.getStyleClass().add("error");
+            txtExistencia.requestFocus();
+            throw new IllegalArgumentException("La existencia debe ser un número entero.");
+        }
+        if (existencia < 0) {
+            txtExistencia.getStyleClass().add("error");
+            txtExistencia.requestFocus();
+            throw new IllegalArgumentException("La existencia no puede ser negativa.");
+        }
+
+        return new Producto(null, codigo, nombre, categoria, precio, existencia,
+                rutaImagen, chkActivo.isSelected());
+    }
+
+    @FXML
+    private void guardar() {
+        limpiarErrores();
+        try {
+            Producto producto = obtenerProductoFormulario();
+            Producto sel = tblProductos.getSelectionModel().getSelectedItem();
+
+            if (sel == null) { // INSERT
+                if (productoDAO.existeCodigo(producto.getCodigo())) {
+                    codigoDuplicado();
+                    return;
+                }
+                productoDAO.guardar(producto);
+                Alertas.mostrarExito("Producto registrado", "La información fue almacenada correctamente.");
+            } else {           // UPDATE (nunca crea uno nuevo)
+                producto.setId(sel.getId());
+                if (productoDAO.existeCodigo(producto.getCodigo(), sel.getId())) {
+                    codigoDuplicado();
+                    return;
+                }
+                productoDAO.actualizar(producto);
+                Alertas.mostrarExito("Producto actualizado", "Los cambios se guardaron correctamente.");
+            }
+            cargarProductos();
+            limpiar();
+
+        } catch (IllegalArgumentException e) {
+            Alertas.mostrarAdvertencia("Validación", e.getMessage());
+        } catch (SQLException e) {
+            if ("23505".equals(e.getSQLState())) {
+                codigoDuplicado();
+            } else {
+                Alertas.mostrarError("Error de base de datos", "No fue posible completar la operación.");
+            }
+            System.err.println(e.getMessage());
+        }
+    }
+
+    private void codigoDuplicado() {
+        txtCodigo.getStyleClass().add("error");
+        Alertas.mostrarAdvertencia("Código duplicado", "Ya existe un producto con ese código.");
+        txtCodigo.requestFocus();
     }
 
     @FXML
     private void eliminar() {
-        Producto seleccionado = tblProductos.getSelectionModel().getSelectedItem();
-        if (seleccionado == null) {
-            mensaje(Alert.AlertType.WARNING, "Selecciona un producto para eliminar.");
+        Producto sel = tblProductos.getSelectionModel().getSelectedItem();
+        if (sel == null) {
+            Alertas.mostrarAdvertencia("Seleccione un producto",
+                    "Debe seleccionar el producto que desea eliminar.");
             return;
         }
+        if (!Alertas.confirmar("Confirmar", "¿Eliminar '" + sel.getNombre() + "'?")) return;
 
-        Alert confirmacion = new Alert(Alert.AlertType.CONFIRMATION,
-                "¿Eliminar '" + seleccionado.getNombre() + "'?",
-                ButtonType.OK, ButtonType.CANCEL);
-        if (confirmacion.showAndWait().orElse(ButtonType.CANCEL) == ButtonType.OK) {
-            productos.remove(seleccionado);
+        try {
+            productoDAO.eliminar(sel.getId());
+            Alertas.mostrarExito("Producto eliminado", "El producto fue eliminado correctamente.");
+            cargarProductos();
             limpiar();
-            mensaje(Alert.AlertType.INFORMATION, "Producto eliminado.");
+        } catch (SQLException e) {
+            Alertas.mostrarError("Error de base de datos", "No fue posible completar la operación.");
+            System.err.println(e.getMessage());
         }
     }
 
@@ -241,7 +259,6 @@ public class ProductoController {
         imgProducto.setImage(null);
         rutaImagen = null;
 
-        // Deshabilitar botón eliminar cuando limpias
         btnEliminar.setDisable(true);
     }
 
@@ -255,5 +272,24 @@ public class ProductoController {
 
     private void mensaje(Alert.AlertType tipo, String texto) {
         new Alert(tipo, texto, ButtonType.OK).showAndWait();
+    }
+
+    private void cargarDatos() {
+        try {
+            cmbCategoria.setItems(FXCollections.observableArrayList(categoriaDAO.listar()));
+            productos.setAll(productoDAO.listar());
+        } catch (SQLException e) {
+            Alertas.mostrarError("Error de base de datos", "No fue posible cargar la información.");
+            System.err.println(e.getMessage());
+        }
+    }
+
+    private void cargarProductos() {
+        try {
+            productos.setAll(productoDAO.listar());
+        } catch (SQLException e) {
+            Alertas.mostrarError("Error de base de datos", "No fue posible cargar los productos.");
+            System.err.println(e.getMessage());
+        }
     }
 }
